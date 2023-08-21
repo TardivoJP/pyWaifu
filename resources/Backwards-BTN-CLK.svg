@@ -1,0 +1,22 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 531 531" width="531" height="531">
+	<title>Layer 1</title>
+	<style>
+		.s0 { fill: #231f20 } 
+		.s1 { fill: #ffffff } 
+	</style>
+	<g id="Layer 1">
+		<g id="Buttons">
+			<g id="-e-Backwards-BTN-CLK">
+				<path id="&lt;Path&gt;" class="s0" d="m77.8 77.8c50.1-50.1 116.7-77.7 187.6-77.7 70.8 0 137.4 27.6 187.5 77.7 50.1 50.1 77.7 116.7 77.7 187.5 0 70.9-27.6 137.5-77.7 187.6-50.1 50.1-116.7 77.7-187.5 77.7-70.9 0-137.5-27.6-187.6-77.7-50.1-50.1-77.7-116.7-77.7-187.6 0-70.8 27.6-137.4 77.7-187.5z"/>
+				<g id="&lt;Group&gt;">
+					<g id="&lt;Group&gt;">
+						<path id="&lt;Path&gt;" class="s1" d="m249.1 191.1l-171 74.2 171 74.2z"/>
+					</g>
+					<g id="&lt;Group&gt;">
+						<path id="&lt;Path&gt;" class="s1" d="m430.6 191.1l-171 74.2 171 74.2z"/>
+					</g>
+				</g>
+			</g>
+		</g>
+	</g>
+</svg>
