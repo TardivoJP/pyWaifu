@@ -16,16 +16,16 @@ It stores the images on the user's computer but also shows them on its GUI built
 - Search and download images for waifus from a specifc anime
 - Search and download images for a specific waifu
 - 3 different modes, single, all and local
--- Single: downloads the first waifu found for any given anime
--- All: downloads all waifus found for any given anime
--- Local: shows what's currently stored in the user's computer
+  * Single: downloads the first waifu found for any given anime
+  * All: downloads all waifus found for any given anime
+  * Local: shows what's currently stored in the user's computer
 - Supports 6 different sources
--- Anime Pictures net
--- Safebooru
--- Danbooru
--- Gelbooru
--- Rule34 xxx
--- DeviantArt
+  * Anime Pictures net
+  * Safebooru
+  * Danbooru
+  * Gelbooru
+  * Rule34 xxx
+  * DeviantArt
 
 ## Usage
 
@@ -38,7 +38,7 @@ It stores the images on the user's computer but also shows them on its GUI built
 
 pyWaifu was only made possible because of these amazing packages.
 
-| Library | Link |
+| Package | Link |
 | ------ | ------ |
 | PyQt6 | https://pypi.org/project/PyQt6/ |
 | Requests | https://pypi.org/project/requests/ |
@@ -55,6 +55,10 @@ If you want to build it yourself from the source code using PyInstaller, run thi
 ```sh
 pyInstaller main_window.py --onefile --icon=waifu.ico --add-data "resources;resources" --noconsole
 ```
+
+## Additional credit
+
+Art - [Mungujakisa Edmond](https://www.vecteezy.com/members/mungujakisa) from [Vecteezy](https://www.vecteezy.com) for the .svg button icons used in the custom video player module.
 
 ## Future development
 
