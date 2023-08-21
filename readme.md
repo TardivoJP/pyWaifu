@@ -49,6 +49,12 @@ pyWaifu was only made possible because of these amazing packages.
 | tqdm | https://pypi.org/project/tqdm/ |
 | PyInstaller | https://pypi.org/project/pyinstaller/ |
 
+## Building the application
+
+If you want to build it yourself from the source code using PyInstaller, run this command:
+```sh
+pyInstaller main_window.py --onefile --icon=waifu.ico --add-data "resources;resources" --noconsole
+```
 
 ## Future development
 
