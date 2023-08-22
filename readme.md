@@ -57,6 +57,10 @@ pyInstaller main_window.py --onefile --icon=waifu.ico --add-data "resources;reso
 ```
 Make sure to copy the .ico file from the resources folder.
 
+## Compatibility
+
+pyWaifu currently only runs on the windows operating system, since PyInstaller is not a cross-compiler. I am looking into cx_Freeze and PyOxidizer for the possibility of cross platform releases.
+
 ## Additional credit
 
 Art - [Mungujakisa Edmond](https://www.vecteezy.com/members/mungujakisa) from [Vecteezy](https://www.vecteezy.com) for the .svg button icons used in the custom video player module.
@@ -69,3 +73,4 @@ pyWaifu may have some more features added depending on circumstances which may i
 - Browsing multiple source results and managing files
 - Storage of image tags
 - Search query improvements
+- User input improvements
