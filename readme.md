@@ -1,5 +1,5 @@
 # pyWaifu
-## _A rather inefficient image grabber_
+## _A rather different image grabber_
 
 ![N|Solid](https://i.imgur.com/OGwjR3p.png)
 
@@ -55,6 +55,7 @@ If you want to build it yourself from the source code using PyInstaller, run thi
 ```sh
 pyInstaller main_window.py --onefile --icon=waifu.ico --add-data "resources;resources" --noconsole
 ```
+Make sure to copy the .ico file from the resources folder.
 
 ## Additional credit
 

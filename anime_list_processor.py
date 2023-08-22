@@ -5,7 +5,7 @@ import random
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from PyQt6.QtCore import QThread, pyqtSignal
-from functions_grimoire import create_user_folder, get_main_female_character_info, get_all_female_character_info, save_image_and_info, source_danbooru, source_safebooru, source_gelbooru, source_animepictures, source_deviantart, source_rule34xxx, invert_name, sanitize_string, extract_anime_info, update_anime_dictionary, update_character_dictionary
+from functions_grimoire import extract_useful_bit_from_link, create_user_folder, get_main_female_character_info, get_all_female_character_info, save_image_and_info, source_danbooru, source_safebooru, source_gelbooru, source_animepictures, source_deviantart, source_rule34xxx, invert_name, sanitize_string, extract_anime_info, update_anime_dictionary, update_character_dictionary
 from config import AppConfig, AppState
 
 class AnimeListProcessor(QThread):
@@ -24,7 +24,7 @@ class AnimeListProcessor(QThread):
 
     def __init__(self, user_name, parent=None):
         super().__init__(parent)
-        self.user_name = user_name
+        self.user_name = extract_useful_bit_from_link(user_name, "list")
         self.character_names = set()
         self.anime_titles = set()
         self.app_config = AppConfig()

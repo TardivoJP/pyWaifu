@@ -14,6 +14,8 @@ from config import AppConfig, AppState
 ## This somehow avoids a crash that only happens when the generated executable from pyInstaller is ran if it had the "--noconsole" argument when creating it
 ## Don't ask me how or why does that even work, I'm as baffled as you are reading this
 
+## You may remove or comment this if you're running the scripts themselves instead of the built application
+
 # Redirect stdout and stderr to a log file before anything else is done in the application
 log_file = open('application_log.log', 'w')
 sys.stdout = log_file
@@ -137,8 +139,8 @@ class MainWindow(QMainWindow):
         self.elapsed_time_timer = QTimer()
         self.elapsed_time_timer.timeout.connect(self.update_elapsed_time)
         
-        ## Overall progress bar (only shown with anime lists)
-        self.overall_description_label = QLabel("<h3>Overall Progress</h3>")
+        ## Overall progress bar (only shown in certain behaviors)
+        self.overall_description_label = QLabel()
         self.overall_description_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         progress_bar_layout.addWidget(self.overall_description_label)
         self.overall_description_label.setVisible(False)
@@ -151,7 +153,7 @@ class MainWindow(QMainWindow):
         progress_bar_layout.addSpacing(10)
         
         ## Progress bar (almost always shown)
-        self.description_label1 = QLabel("<h3>Progress</h3>")
+        self.description_label1 = QLabel()
         self.description_label1.setAlignment(Qt.AlignmentFlag.AlignCenter)
         progress_bar_layout.addWidget(self.description_label1)
         self.description_label2 = QLabel()
@@ -165,7 +167,7 @@ class MainWindow(QMainWindow):
         progress_bar_layout.addSpacing(10)
         
         ## Nested progress bar (conditionally shown depending on operations)
-        self.nested_description_label = QLabel("<h4>Additional Images Progress</h4>")
+        self.nested_description_label = QLabel()
         self.nested_description_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.nested_description_label.setVisible(False)
         progress_bar_layout.addWidget(self.nested_description_label)
@@ -341,6 +343,7 @@ class MainWindow(QMainWindow):
         self.stacked_layout.setCurrentWidget(self.main_menu_container)
         self.destroy_subfolder_widget()
         self.destroy_subfolder_image_display_widget()
+        self.reset_progress_bar_labels()
         
     def show_waifu_grid(self):
         self.stacked_layout.setCurrentWidget(self.subfolder_widget)
@@ -399,6 +402,15 @@ class MainWindow(QMainWindow):
     def change_overall_progress_bar_state(self):
         self.overall_description_label.setVisible(not self.overall_description_label.isVisible())
         self.overall_progress_bar.setVisible(not self.overall_progress_bar.isVisible())
+        
+    def reset_progress_bar_labels(self):
+        self.overall_progress_bar.setValue(0)
+        self.progress_bar.setValue(0)
+        self.nested_progress_bar.setValue(0)
+        self.overall_description_label.setText("")
+        self.description_label1.setText("")
+        self.description_label2.setText("")
+        self.nested_description_label.setText("")
         
     def run_script(self, processor_class, button_widget_class, input_field_text):
         self.show_progress_bar()

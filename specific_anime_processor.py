@@ -1,7 +1,7 @@
 import time
 import random
 from PyQt6.QtCore import QThread, pyqtSignal
-from functions_grimoire import get_main_female_character_info, get_all_female_character_info, save_image_to_character_folder, source_danbooru, source_safebooru, source_gelbooru, source_animepictures, source_deviantart, source_rule34xxx, invert_name, sanitize_string, get_character_names_from_anime_folder, update_anime_dictionary, look_up_anime_dictionary, update_character_dictionary
+from functions_grimoire import extract_useful_bit_from_link, get_main_female_character_info, get_all_female_character_info, save_image_to_character_folder, source_danbooru, source_safebooru, source_gelbooru, source_animepictures, source_deviantart, source_rule34xxx, invert_name, sanitize_string, get_character_names_from_anime_folder, update_anime_dictionary, look_up_anime_dictionary, update_character_dictionary
 from config import AppConfig, AppState
 
 class SpecificAnimeProcessor(QThread):
@@ -20,7 +20,13 @@ class SpecificAnimeProcessor(QThread):
 
     def __init__(self, show_number, parent=None):
         super().__init__(parent)
-        self.show_number = show_number
+        
+        try:
+            int(show_number)
+            self.show_number = show_number
+        except ValueError:
+            self.show_number = extract_useful_bit_from_link(show_number, "anime")
+        
         self.character = []
         self.anime_title = None
         self.anime_title_folder = None

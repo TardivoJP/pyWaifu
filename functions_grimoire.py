@@ -62,6 +62,31 @@ def extract_titles(title_text):
         return main_title, alternate_title
     return None, None
 
+def extract_useful_bit_from_link(input, operand):
+    if(operand == "list"):
+        pattern = r'https://myanimelist\.net/(?:profile|animelist)/([^/?]+)'
+        match = re.match(pattern, input)
+        if match:
+            return match.group(1)
+        
+        return input
+    
+    elif(operand == "anime"):
+        pattern = r'https://myanimelist\.net/anime/([^/?]+)'
+        match = re.match(pattern, input)
+        if match:
+            return match.group(1)
+        
+        return None
+    
+    elif(operand == "character"):
+        pattern = r'https://myanimelist\.net/character/([^/?]+)'
+        match = re.match(pattern, input)
+        if match:
+            return match.group(1)
+        
+        return None
+
 def remove_parentheses(input_string):
     while "(" in input_string:
         start = input_string.index("(")
