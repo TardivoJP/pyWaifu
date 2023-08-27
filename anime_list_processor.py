@@ -5,7 +5,7 @@ import random
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from PyQt6.QtCore import QThread, pyqtSignal
-from functions_grimoire import extract_useful_bit_from_link, create_user_folder, get_main_female_character_info, get_all_female_character_info, save_image_and_info, source_danbooru, source_safebooru, source_gelbooru, source_animepictures, source_deviantart, source_rule34xxx, invert_name, sanitize_string, extract_anime_info, update_anime_dictionary, update_character_dictionary
+from functions_grimoire import extract_useful_bit_from_link, create_user_folder, get_main_female_character_info, get_all_female_character_info, save_image_and_info, source_danbooru, source_danbooru_api, source_safebooru, source_gelbooru, source_animepictures, source_deviantart, source_rule34xxx, invert_name, sanitize_string, extract_anime_info, update_anime_dictionary, update_character_dictionary
 from config import AppConfig, AppState
 
 class AnimeListProcessor(QThread):
@@ -24,13 +24,14 @@ class AnimeListProcessor(QThread):
 
     def __init__(self, user_name, parent=None):
         super().__init__(parent)
-        self.user_name = extract_useful_bit_from_link(user_name, "list")
+        self.user_name = user_name
         self.character_names = set()
         self.anime_titles = set()
         self.app_config = AppConfig()
 
     def run(self):
         if self.app_config.state == AppState.DOWNLOAD_ONE_CHARACTER or self.app_config.state == AppState.DOWNLOAD_ALL_CHARACTERS:
+            self.user_name = extract_useful_bit_from_link(self.user_name, "list")
             self.get_list_info()
         elif self.app_config.state == AppState.USE_LOCAL_IMAGES:
             self.use_local_images()
@@ -183,7 +184,7 @@ class AnimeListProcessor(QThread):
         }
 
         for source in ["danbooru", "safebooru", "animepictures", "gelbooru", "rule34xxx", "deviantart"]:
-            if self.app_config.get_source_setting(source):
+            if self.app_config.get_source_setting(source, "enabled"):
                 self.description_signal2.emit(f"<h3>Waifu - {character_name} - Source: {source}</h3>")
                 
                 failed = True
@@ -191,7 +192,12 @@ class AnimeListProcessor(QThread):
                 source_retry_search_terms = retry_search_terms_per_source.get(source, [])
                 
                 for retry_search_term in source_retry_search_terms:
-                    source_function = globals()[f"source_{source}"]
+                    
+                    if self.app_config.get_source_setting(source, "use_api"):
+                        source_function = globals()[f"source_{source}_api"]
+                    else:
+                        source_function = globals()[f"source_{source}"]
+                        
                     if source_function(folder_name, character_name, retry_search_term, self.nested_progress_signal, self.nested_description_signal):
                         failed = False
                         break

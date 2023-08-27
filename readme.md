@@ -20,15 +20,18 @@ It stores the images on the user's computer but also shows them on its GUI built
   * All: downloads all waifus found for any given anime
   * Local: shows what's currently stored in the user's computer
 - Supports 6 different sources
-  * Anime Pictures net
-  * Safebooru
-  * Danbooru
-  * Gelbooru
-  * Rule34 xxx
-  * DeviantArt
+  * Anime Pictures net (Web scraping)
+  * Safebooru (Public API)
+  * Danbooru (Web scraping) + (User's API)
+  * Gelbooru (Public API)
+  * Rule34 xxx (Public API)
+  * DeviantArt (Web scraping)
+- Configuration data is encrypted and stored with a password set by the user, this is useful for things like API keys
 
 ## Usage
 
+- When running for the first time, create a new passphrase to encrypt and store your configuration data
+  * If you ever forget your passphrase, you can always delete the generated config.json to create a new one
 - Input just the name of a myanimelist user, anime id or character id in their respective fields and click "Find waifus" to begin the process.
 - Click on the "Waifus" button to show everything the application has ever downloaded.
 - Click on "Options" to modify the application's behavior.
@@ -46,6 +49,7 @@ pyWaifu was only made possible because of these amazing packages.
 | Pillow | https://pypi.org/project/Pillow/ |
 | OpenCV | https://pypi.org/project/opencv-python/ |
 | Feedparser | https://pypi.org/project/feedparser/ |
+| Cryptography | https://pypi.org/project/cryptography/ |
 | tqdm | https://pypi.org/project/tqdm/ |
 | PyInstaller | https://pypi.org/project/pyinstaller/ |
 

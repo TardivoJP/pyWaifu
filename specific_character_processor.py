@@ -1,7 +1,8 @@
+import os
 import time
 import random
 from PyQt6.QtCore import QThread, pyqtSignal
-from functions_grimoire import extract_useful_bit_from_link, get_single_character_info, save_image_to_character_folder, source_danbooru, source_safebooru, source_gelbooru, source_animepictures, source_deviantart, source_rule34xxx, invert_name, sanitize_string, get_anime_title_from_character_name, update_character_dictionary, look_up_character_dictionary
+from functions_grimoire import extract_useful_bit_from_link, get_single_character_info, save_image_to_character_folder, source_danbooru, source_danbooru_api, source_safebooru, source_gelbooru, source_animepictures, source_deviantart, source_rule34xxx, invert_name, sanitize_string, get_anime_title_from_character_name, update_character_dictionary, look_up_character_dictionary
 from config import AppConfig, AppState
 
 class SpecificCharacterProcessor(QThread):
@@ -20,13 +21,7 @@ class SpecificCharacterProcessor(QThread):
 
     def __init__(self, character_number, parent=None):
         super().__init__(parent)
-
-        try:
-            int(character_number)
-            self.character_number = character_number
-        except ValueError:
-            self.character_number = extract_useful_bit_from_link(character_number, "character")
-        
+        self.character_number = character_number
         self.character = []
         self.anime_title = None
         self.anime_title_folder = None
@@ -42,7 +37,13 @@ class SpecificCharacterProcessor(QThread):
             self.overall_description_signal.emit(f"<h3>Overall Progress</h3>")
         
         if self.app_config.state == AppState.DOWNLOAD_ONE_CHARACTER or self.app_config.state == AppState.DOWNLOAD_ALL_CHARACTERS:
+            try:
+                int(self.character_number)
+            except ValueError:
+                self.character_number = extract_useful_bit_from_link(self.character_number, "character")
+            
             self.download_character()
+            
         elif self.app_config.state == AppState.USE_LOCAL_IMAGES:
             self.use_local_images()
             
@@ -143,7 +144,7 @@ class SpecificCharacterProcessor(QThread):
                 overall_progress_value = int((index + 1) / 6 * 100)
                 self.overall_progress_signal.emit(overall_progress_value)
             
-            if self.app_config.get_source_setting(source):
+            if self.app_config.get_source_setting(source, "enabled"):
                 self.description_signal2.emit(f"<h3>Waifu - {character_name} - Source: {source}</h3>")
                 
                 failed = True
@@ -151,7 +152,12 @@ class SpecificCharacterProcessor(QThread):
                 source_retry_search_terms = retry_search_terms_per_source.get(source, [])
                 
                 for retry_search_term in source_retry_search_terms:
-                    source_function = globals()[f"source_{source}"]
+                    
+                    if self.app_config.get_source_setting(source, "use_api"):
+                        source_function = globals()[f"source_{source}_api"]
+                    else:
+                        source_function = globals()[f"source_{source}"]
+                    
                     if source_function(f"outputs\{self.anime_title_folder}", character_name, retry_search_term, self.nested_progress_signal, self.nested_description_signal):
                         failed = False
                         break

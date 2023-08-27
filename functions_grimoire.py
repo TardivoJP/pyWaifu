@@ -13,6 +13,7 @@ from PIL import Image
 from tqdm import tqdm
 from urllib.parse import urlparse
 from PyQt6.QtCore import pyqtSignal
+from config import AppConfig, AppState
 
 ## Yes, I know this is a spaghetti mess
 
@@ -167,16 +168,15 @@ def get_character_names_from_anime_folder(anime_title):
 def get_anime_title_from_character_name(character_name):
     found_in_anime_titles = None
 
-    outputs_folder = "outputs"
-
-    anime_title_folders = [item for item in os.listdir(outputs_folder) if os.path.isdir(os.path.join(outputs_folder, item))]
-    for anime_title in anime_title_folders:
-        anime_folder_path = os.path.join(outputs_folder, anime_title)
-        
-        character_folders = os.listdir(anime_folder_path)
-        if character_name in character_folders:
-            found_in_anime_titles = anime_title
-            break
+    if(os.path.exists("outputs") and os.path.isdir("outputs")):
+        anime_title_folders = [item for item in os.listdir("outputs") if os.path.isdir(os.path.join("outputs", item))]
+        for anime_title in anime_title_folders:
+            anime_folder_path = os.path.join("outputs", anime_title)
+            
+            character_folders = os.listdir(anime_folder_path)
+            if character_name in character_folders:
+                found_in_anime_titles = anime_title
+                break
 
     return found_in_anime_titles
 
@@ -750,34 +750,152 @@ def source_danbooru(folder_name, character_name, search_tag, nested_progress_sig
                             elif response.status_code == 429:
                                 nested_progress_signal.emit(nested_progress_value)
                                 nested_description_signal.emit(f"<h4>Failed to download image: {img_name}. You are currently being rate limited.</h4>")
+                                time.sleep(5)
                             else:
                                 nested_progress_signal.emit(nested_progress_value)
                                 nested_description_signal.emit(f"<h4>Failed to download image: {img_name}</h4>")
+                                time.sleep(5)
                     else:
                         nested_description_signal.emit(f"<h4>Download link not found.</h4>")
+                        time.sleep(5)
                     
                     if not skip_delay:
-                        time.sleep(random.uniform(5, 8))
+                        time.sleep(random.uniform(3, 5))
                     else:
-                        time.sleep(random.uniform(2, 3))
+                        time.sleep(random.uniform(1, 2))
                         skip_delay = False
                 elif response.status_code == 429:
                     nested_progress_signal.emit(nested_progress_value)
                     nested_description_signal.emit(f"<h4>Failed to fetch post: {post_url}. You are currently being rate limited.</h4>")
+                    time.sleep(5)
                 else:
                     nested_progress_signal.emit(nested_progress_value)
                     nested_description_signal.emit(f"<h4>Failed to fetch post: {post_url}</h4>")
+                    time.sleep(5)
                     
             if(len(href_list)==0):
                 nested_description_signal.emit(f"<h4>No posts found for the search term: {search_tag}.</h4>")
+                time.sleep(2)
                 return False
             
         else:
             nested_description_signal.emit(f"<h4>No <div id='posts'> found.</h4>")
+            time.sleep(5)
     elif response.status_code == 429:
         nested_description_signal.emit(f"<h4>Search failed. You are currently being rate limited.</h4>")
+        time.sleep(5)
     else:
         nested_description_signal.emit(f"<h4>Search failed. Status code: {response.status_code}</h4>")
+        time.sleep(5)
+        
+    return True
+
+def source_danbooru_api(folder_name, character_name, search_tag, nested_progress_signal, nested_description_signal):
+    save_dir = os.path.join(folder_name, character_name)
+    
+    app_config = AppConfig()
+
+    credentials = app_config.get_api_credentials("danbooru")
+    danbooru_login = credentials["login"]
+    danbooru_api_key = credentials["api_key"]
+    
+    
+    if(danbooru_login != "" and danbooru_api_key != ""):
+        
+        base_url = "https://danbooru.donmai.us"
+        search_endpoint = "/posts.json"
+        params = {
+            "tags": search_tag,
+            "limit": 20,
+            "page": 1,
+            "login": danbooru_login,
+            "api_key": danbooru_api_key
+        }
+
+        post_data = []
+
+        response = requests.get(base_url + search_endpoint, params=params)
+        
+        if response.status_code == 200:
+            os.makedirs(save_dir, exist_ok=True)
+            
+            nested_description_signal.emit(f"<h4>Parsing possible links...</h4>")
+            
+            posts = response.json()
+
+            for post in posts:
+                if "id" in post and "large_file_url" in post:
+                    post_entry = {
+                        "id": post["id"],
+                        "tag_string_artist": post["tag_string_artist"],
+                        "large_file_url": post["large_file_url"]
+                    }
+                    post_data.append(post_entry)
+            
+            for index, post in enumerate(post_data):
+                nested_progress_value = int((index + 1) / len(post_data) * 100)
+                nested_progress_signal.emit(nested_progress_value)
+                
+                post_id = post_data[index]['id']
+                file_url = post_data[index]['large_file_url']
+                artist_name = post_data[index]['tag_string_artist']
+                file_extension = os.path.splitext(file_url)[1]
+                
+                if(artist_name is not None):
+                    image_filename = f"{search_tag}_danbooru_by_{artist_name}_{post_id}{file_extension}"
+                    thumbnail_filename = f"{search_tag}_danbooru_by_{artist_name}_{post_id}_thumbnail{file_extension}"
+                else:
+                    image_filename = f"{search_tag}_danbooru_by_unknown_artist_{post_id}{file_extension}"
+                    thumbnail_filename = f"{search_tag}_danbooru_by_unknown_artist_{post_id}_thumbnail{file_extension}"
+                
+                local_file_path = os.path.join(save_dir, image_filename)
+                thumbnail_file_path = os.path.join(save_dir, thumbnail_filename)
+                
+                wackybullshit1 = save_dir+"\\"+image_filename
+                wackybullshit2 = save_dir+"\\"+thumbnail_filename
+                
+                if os.path.exists(local_file_path):
+                    nested_description_signal.emit(f"<h4>Image {image_filename} already exists. Skipping download.</h4>")
+                    if os.path.exists(thumbnail_file_path):
+                        nested_description_signal.emit(f"<h4>Thumbnail {thumbnail_filename} already exists.</h4>")
+                    else:
+                        nested_description_signal.emit(f"<h4>Creating thumbnail for {image_filename}.</h4>")
+                        create_thumbnail(wackybullshit1, wackybullshit2)
+                else:
+                    with open(local_file_path, "wb") as image_file:
+                        image_response = requests.get(file_url)
+                        if image_response.status_code == 200:
+                            image_file.write(image_response.content)
+                            nested_description_signal.emit(f"<h4>Saved image: {image_filename}</h4>")
+                            
+                            create_thumbnail(wackybullshit1, wackybullshit2)
+                            
+                        elif image_response.status_code == 429:
+                            nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}. You are currently being rate limited.</h4>")
+                            time.sleep(5)
+                        else:
+                            nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}.</h4>")
+                            time.sleep(5)
+            if(len(post_data)==0):
+                    nested_description_signal.emit(f"<h4>No posts found for the search term: {search_tag}.</h4>")
+                    time.sleep(2)
+                    return False
+        elif response.status_code == 429:
+            nested_description_signal.emit(f"<h4>API request failed. You are being rate limited. Status code: {response.status_code}.</h4>")
+            time.sleep(5)
+        elif response.status_code == 401:
+            nested_description_signal.emit(f"<h4>API request failed. Unauthorized. Check your login and API key. Status code: {response.status_code}.</h4>")
+            time.sleep(5)
+        elif response.status_code == 500:
+            nested_description_signal.emit(f"<h4>API request failed. Internal server error. Status code: {response.status_code}.</h4>")
+            time.sleep(5)
+        else:
+            nested_description_signal.emit(f"<h4>API request failed. Status code: {response.status_code}.</h4>")
+            time.sleep(5)
+    
+    else:
+        nested_description_signal.emit(f"<h4>Couldn't request API. No login or API key configured.</h4>")
+        time.sleep(5)
         
     return True
 
@@ -839,15 +957,20 @@ def source_safebooru(folder_name, character_name, search_tag, nested_progress_si
                         
                     elif image_response.status_code == 429:
                         nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}. You are currently being rate limited.</h4>")
+                        time.sleep(5)
                     else:
                         nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}.</h4>")
+                        time.sleep(5)
         if(len(root.findall("post"))==0):
                 nested_description_signal.emit(f"<h4>No posts found for the search term: {search_tag}.</h4>")
+                time.sleep(2)
                 return False
     elif response.status_code == 429:
         nested_description_signal.emit(f"<h4>API request failed. You are being rate limited. Status code: {response.status_code}.</h4>")
+        time.sleep(5)
     else:
         nested_description_signal.emit(f"<h4>API request failed. Status code: {response.status_code}.</h4>")
+        time.sleep(5)
         
     return True
 
@@ -910,15 +1033,20 @@ def source_gelbooru(folder_name, character_name, search_tag, nested_progress_sig
                         
                     elif image_response.status_code == 429:
                         nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}. You are currently being rate limited.</h4>")
+                        time.sleep(5)
                     else:
                         nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}.</h4>")
+                        time.sleep(5)
         if(len(root.findall("post"))==0):
                 nested_description_signal.emit(f"<h4>No posts found for the search term: {search_tag}.</h4>")
+                time.sleep(2)
                 return False
     elif response.status_code == 429:
         nested_description_signal.emit(f"<h4>API request failed. You are being rate limited. Status code: {response.status_code}.</h4>")
+        time.sleep(5)
     else:
         nested_description_signal.emit(f"<h4>API request failed. Status code: {response.status_code}.</h4>")
+        time.sleep(5)
         
     return True
 
@@ -979,15 +1107,20 @@ def source_rule34xxx(folder_name, character_name, search_tag, nested_progress_si
                         
                     elif image_response.status_code == 429:
                         nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}. You are currently being rate limited.</h4>")
+                        time.sleep(5)
                     else:
                         nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}.</h4>")
+                        time.sleep(5)
         if(len(root.findall("post"))==0):
                 nested_description_signal.emit(f"<h4>No posts found for the search term: {search_tag}.</h4>")
+                time.sleep(2)
                 return False
     elif response.status_code == 429:
         nested_description_signal.emit(f"<h4>API request failed. You are being rate limited. Status code: {response.status_code}.</h4>")
+        time.sleep(5)
     else:
         nested_description_signal.emit(f"<h4>API request failed. Status code: {response.status_code}.</h4>")
+        time.sleep(5)
         
     return True
 
@@ -1070,25 +1203,33 @@ def source_animepictures(folder_name, character_name, search_tag, nested_progres
                                     
                                 elif image_response.status_code == 429:
                                     nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}. You are currently being rate limited.</h4>")
+                                    time.sleep(5)
                                 else:
                                     nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}.</h4>")
+                                    time.sleep(5)
                     else:
                         nested_description_signal.emit(f"<h4>Failed to fetch image url from the post.</h4>")
+                        time.sleep(5)
                 
                 elif response.status_code == 429:
                     nested_description_signal.emit(f"<h4>Post request failed. You are being rate limited. Status code: {response.status_code}.</h4>")
+                    time.sleep(5)
                 else:
                     nested_description_signal.emit(f"<h4>Post request failed. Status code: {response.status_code}.</h4>")
+                    time.sleep(5)
                 
                 time.sleep(random.uniform(1, 2))
         else:
             nested_description_signal.emit(f"<h4>No posts found for the search term: {search_tag}.</h4>")
+            time.sleep(2)
             return False
             
     elif response.status_code == 429:
         nested_description_signal.emit(f"<h4>Request failed. You are being rate limited. Status code: {response.status_code}.</h4>")
+        time.sleep(5)
     else:
         nested_description_signal.emit(f"<h4>Request failed. Status code: {response.status_code}.</h4>")
+        time.sleep(5)
         
     return True
 
@@ -1103,6 +1244,7 @@ def source_deviantart(folder_name, character_name, search_tag, nested_progress_s
         
     except:
         nested_description_signal.emit(f"<h4>Request failed. Couldn't parse the RSS url.</h4>")
+        time.sleep(5)
     else:
         os.makedirs(save_dir, exist_ok=True)
         nested_description_signal.emit(f"<h4>Parsing possible links...</h4>")
@@ -1131,6 +1273,7 @@ def source_deviantart(folder_name, character_name, search_tag, nested_progress_s
                     file_extension = os.path.splitext(path)[1]
                 except:
                     nested_description_signal.emit(f"<h4>Couldn't find image url in the post {post_id} HTML.</h4>")
+                    time.sleep(5)
                 else:
                     image_response = requests.get(image_url)
                     
@@ -1159,13 +1302,17 @@ def source_deviantart(folder_name, character_name, search_tag, nested_progress_s
                                 create_thumbnail(wackybullshit1, wackybullshit2)
                     elif response.status_code == 429:
                         nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}. You are currently being rate limited.</h4>")
+                        time.sleep(5)
                     else:
                         nested_description_signal.emit(f"<h4>Failed to download image: {image_filename}.</h4>")
+                        time.sleep(5)
                         
             elif response.status_code == 429:
                 nested_description_signal.emit(f"<h4>Request failed. You are being rate limited. Status code: {response.status_code}.</h4>")
+                time.sleep(5)
             else:
                 nested_description_signal.emit(f"<h4>Request failed. Status code: {response.status_code}.</h4>")
+                time.sleep(5)
                 
             time.sleep(random.uniform(1, 2))
     
